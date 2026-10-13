@@ -1,0 +1,1532 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Проп-хант</title>
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=Rubik+Mono+One&display=swap">
+<style>
+  :root {
+    --bg: #14110f;
+    --panel: #211c18;
+    --line: #3b322b;
+    --fg: #f6efe6;
+    --muted: #a3968a;
+    --accent: #ff8a3d;
+    --bad: #ff8d8d;
+    --display: "Rubik Mono One", "Arial Black", system-ui, sans-serif;
+    --body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: radial-gradient(1100px 650px at 50% -10%, #3a2a1c 0%, var(--bg) 62%) fixed var(--bg);
+    color: var(--fg);
+    font: 16px/1.45 var(--body);
+    overflow: hidden;
+  }
+  button, input { font: inherit; color: inherit; }
+  button {
+    border: 0; border-radius: 12px; padding: 13px 18px; cursor: pointer;
+    font-weight: 700; background: var(--accent); color: #2b1300;
+    transition: transform .08s, filter .15s;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+  button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); font-weight: 500; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input {
+    width: 100%; min-width: 0; background: #17130f; border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  label, .lbl { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+  .screen {
+    height: 100%; overflow: auto; display: flex; align-items: center; justify-content: center;
+    padding: 24px 16px;
+  }
+  .card {
+    width: 100%; max-width: 440px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 20px; padding: 26px 24px; display: flex; flex-direction: column; gap: 16px;
+  }
+  h1 { font: 400 32px/1.05 var(--display); margin: 0; }
+  h1 span { color: var(--accent); }
+  h2 { font: 400 17px/1.25 var(--display); margin: 0; }
+  p { margin: 0; color: var(--muted); }
+  .row { display: flex; gap: 10px; }
+  .row > button { flex: none; }
+  .or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  #codeIn { text-transform: uppercase; letter-spacing: .3em; font-weight: 700; text-align: center; }
+  #status { min-height: 1.45em; font-size: 14px; }
+  #status.bad { color: var(--bad); }
+  .hint { font-size: 13px; }
+
+  .code {
+    font: 400 42px/1 var(--display); letter-spacing: .16em; color: var(--accent);
+    text-align: center; padding: 12px 0 8px; user-select: all;
+  }
+  .slots, .res { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .slots li {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 12px; min-width: 0;
+  }
+  .slots li.empty { border-style: dashed; color: var(--muted); }
+  .dot { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag { font-size: 12px; color: var(--muted); flex: none; }
+  .maps { display: flex; flex-wrap: wrap; gap: 6px; }
+  .maps button { padding: 8px 12px; font-size: 14px; border-radius: 999px; }
+  .maps button.on { background: var(--accent); color: #2b1300; border-color: var(--accent); font-weight: 700; }
+  .maps button:disabled { opacity: 1; cursor: default; }
+  .maps button:disabled:not(.on) { opacity: .45; }
+
+  #game { height: 100%; display: flex; flex-direction: column; align-items: center; position: relative; }
+  #hud {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 8px 12px 4px; flex-wrap: wrap;
+  }
+  .chip {
+    display: flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--line); min-width: 0; max-width: 100%; font-size: 14px;
+  }
+  .chip b { font-variant-numeric: tabular-nums; }
+  .chip.me { border-color: var(--fg); }
+  .chip.out { opacity: .5; }
+  .chip .tag { font-size: 11px; }
+  #timer { font: 400 18px/1 var(--display); font-variant-numeric: tabular-nums; padding: 0 8px; min-width: 6.5em; text-align: center; }
+  #timer.low { color: var(--bad); }
+  #tip { font-size: 13px; text-align: center; padding: 0 12px 6px; min-height: 1.45em; }
+  #stage { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0 8px 8px; }
+  canvas { display: block; border-radius: 14px; border: 1px solid var(--line); touch-action: none; cursor: crosshair; }
+  #actBtn {
+    position: absolute; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    width: 96px; height: 96px; border-radius: 50%; padding: 0; font-size: 14px; opacity: .92;
+  }
+  #over {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(12, 9, 7, .7); padding: 16px; overflow: auto;
+  }
+  .res li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .res .nm { white-space: normal; }
+  .res small { display: block; color: var(--muted); font-size: 13px; }
+  .res b { font-variant-numeric: tabular-nums; font-size: 18px; }
+  #lag {
+    position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+    z-index: 10; max-width: calc(100% - 32px); padding: 8px 16px; border-radius: 999px;
+    background: #5c1f1f; color: #ffe1e1; border: 1px solid #a04444; font-size: 14px; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<main id="menu" class="screen">
+  <div class="card">
+    <div>
+      <h1>Проп-<span>хант</span></h1>
+      <p style="margin-top:10px">Онлайн-прятки на троих. Двое превращаются в предметы и прячутся, третий ищет.</p>
+    </div>
+    <div>
+      <label for="nameIn">Твоё имя</label>
+      <input id="nameIn" maxlength="12" autocomplete="off" placeholder="Игрок">
+    </div>
+    <button id="createBtn">Создать комнату</button>
+    <div class="or">или войти по коду</div>
+    <div class="row">
+      <input id="codeIn" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="КОД" aria-label="Код комнаты">
+      <button id="joinBtn" class="ghost">Войти</button>
+    </div>
+    <p id="status" role="status"></p>
+    <p class="hint">Ходить: WASD или стрелки, на телефоне води пальцем. Прячешься: подойди к предмету и нажми E или пробел. Ищешь: ударь по предмету мышью или пробелом. Каждый промах отнимает 5 секунд.</p>
+  </div>
+</main>
+
+<main id="lobby" class="screen" hidden>
+  <div class="card">
+    <div>
+      <h2>Код комнаты</h2>
+      <div class="code" id="codeOut">····</div>
+      <p class="hint" id="lobbyHint"></p>
+    </div>
+    <div class="row">
+      <button id="copyCode" class="ghost" style="flex:1">Скопировать код</button>
+      <button id="copyLink" class="ghost" style="flex:1" hidden>Скопировать ссылку</button>
+    </div>
+    <div>
+      <span class="lbl" id="countLbl">Игроки</span>
+      <ul class="slots" id="slots"></ul>
+    </div>
+    <div>
+      <span class="lbl" id="mapLbl">Карта</span>
+      <div class="maps" id="maps"></div>
+    </div>
+    <button id="startBtn">Начать игру</button>
+    <p id="waitMsg" class="hint" hidden>Ждём, пока хост начнёт игру.</p>
+    <button id="leaveBtn" class="ghost">Выйти</button>
+    <p id="netInfo" class="hint"></p>
+  </div>
+</main>
+
+<div id="game" hidden>
+  <div id="hud"></div>
+  <p id="tip"></p>
+  <div id="stage"><canvas id="cv" width="1280" height="800"></canvas></div>
+  <button id="actBtn" hidden>Удар</button>
+  <div id="over" hidden>
+    <div class="card">
+      <h2 id="overTitle">Раунд окончен</h2>
+      <ul class="res" id="res"></ul>
+      <button id="nextBtn">Следующий раунд</button>
+      <button id="toLobbyBtn" class="ghost">В лобби, сменить карту</button>
+      <p id="overWait" class="hint" hidden>Ждём, пока хост запустит следующий раунд.</p>
+      <button id="overLeave" class="ghost">Выйти</button>
+    </div>
+  </div>
+</div>
+
+<div id="lag" role="status" hidden>Связь с хостом прерывается, ждём…</div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+
+const W = 1280, H = 800, PR = 15, MAXP = 3;
+const HIDE = 20, HUNT = 80, MISS = 5, REACH = 105, VIS = 290, HINT_EVERY = 14;
+const SP_HUNTER = 235, SP_HIDER = 215;
+const COLORS = ['#ffc94d', '#4de3c8', '#ff7aa8'];
+const SPAWNS = [[W / 2, H / 2], [230, H / 2], [W - 230, H / 2]]; // охотник, первый и второй прячущийся
+const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+// Независимые публичные серверы-ретрансляторы. Хост слушает все, до каких дотянулся,
+// гость заходит через первый, по которому хост ему ответил.
+const BROKERS = [
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://broker.hivemq.com:8884/mqtt',
+  'wss://test.mosquitto.org:8081/mqtt',
+];
+const TOPIC = 'prophunt-v1/';
+const SILENCE = 25000;  // сколько ждём молчащего собеседника, прежде чем считать его пропавшим
+const LAG_WARN = 5000;  // после какой тишины показываем «связь прерывается»
+
+/* ---------- рисовалки ---------- */
+
+const circ = (c, x, y, r, fill) => { c.fillStyle = fill; c.beginPath(); c.arc(x, y, r, 0, 6.3); c.fill(); };
+const ell = (c, x, y, rx, ry, fill, rot) => { c.fillStyle = fill; c.beginPath(); c.ellipse(x, y, rx, ry, rot || 0, 0, 6.3); c.fill(); };
+const rect = (c, x, y, w, h, fill, rad) => {
+  c.fillStyle = fill; c.beginPath();
+  if (c.roundRect) c.roundRect(x, y, w, h, rad || 0); else c.rect(x, y, w, h);
+  c.fill();
+};
+const ring = (c, x, y, r, col, lw) => { c.strokeStyle = col; c.lineWidth = lw; c.beginPath(); c.arc(x, y, r, 0, 6.3); c.stroke(); };
+const line = (c, x1, y1, x2, y2, col, lw) => { c.strokeStyle = col; c.lineWidth = lw; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); };
+const poly = (c, pts, fill) => { c.fillStyle = fill; c.beginPath(); for (const [x, y] of pts) c.lineTo(x, y); c.closePath(); c.fill(); };
+const sect = (c, r, a0, a1, fill) => { c.fillStyle = fill; c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r, a0, a1); c.closePath(); c.fill(); };
+const starPts = (n, ro, ri) => { const a = []; for (let i = 0; i < n * 2; i++) { const g = i * Math.PI / n, r = i % 2 ? ri : ro; a.push([Math.sin(g) * r, -Math.cos(g) * r]); } return a; };
+
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------- карты: предметы, препятствия, фон ---------- */
+
+const T = (n, r, d) => ({ n, r, d });
+const speckle = (g, rnd, n, cols) => { for (let i = 0; i < n; i++) circ(g, rnd() * W, rnd() * H, 1.5 + rnd() * 4, cols[i % cols.length]); };
+
+const MAPS = [
+  {
+    name: 'Парк', count: 46, rects: [], circles: [{ x: 900, y: 215, r: 92 }],
+    types: [
+      T('Куст', 22, c => { circ(c, -9, 5, 14, '#2c6a33'); circ(c, 10, 6, 13, '#2c6a33'); circ(c, 0, -6, 16, '#377c3d'); circ(c, -5, -10, 6, '#4a9750'); }),
+      T('Дерево', 30, c => { circ(c, 0, 0, 30, '#27653a'); circ(c, -5, -5, 22, '#30793f'); circ(c, -10, -11, 11, '#3f9150'); circ(c, 4, 5, 4, '#5a3b20'); }),
+      T('Скамейка', 23, c => { rect(c, -24, -11, 48, 22, '#93602f', 3); for (const y of [-5, 1, 7]) line(c, -20, y, 20, y, '#6f4520', 2); rect(c, -25, -12, 6, 24, '#3d4047', 2); rect(c, 19, -12, 6, 24, '#3d4047', 2); }),
+      T('Урна', 13, c => { circ(c, 0, 0, 13, '#5c646e'); circ(c, 0, 0, 8, '#23272c'); ring(c, 0, 0, 12, '#3b424a', 2); }),
+      T('Камень', 18, c => { poly(c, [[-17, 3], [-11, -12], [3, -16], [16, -6], [17, 8], [4, 15], [-10, 13]], '#878d96'); poly(c, [[-9, -3], [-5, -10], [4, -12], [8, -5], [-2, 0]], '#a3a9b2'); }),
+      T('Клумба', 20, c => { circ(c, 0, 0, 20, '#7b5330'); circ(c, 0, 0, 16, '#3c7a3b'); const col = ['#ff6b8b', '#ffd24d', '#fff', '#c58bff', '#ff8f4d', '#fff']; for (let i = 0; i < 6; i++) circ(c, Math.cos(i * 1.047) * 9, Math.sin(i * 1.047) * 9, 4, col[i]); circ(c, 0, 0, 3.5, '#ffd24d'); }),
+    ],
+    paint(g, rnd) {
+      rect(g, 0, 0, W, H, '#5f9f57');
+      speckle(g, rnd, 300, ['rgba(255,255,255,.05)', 'rgba(0,50,0,.09)']);
+      g.lineCap = 'round';
+      line(g, -30, 400, W + 30, 400, '#cdb98a', 50); line(g, 640, -30, 640, H + 30, '#cdb98a', 50);
+      line(g, -30, 400, W + 30, 400, '#dccb9f', 40); line(g, 640, -30, 640, H + 30, '#dccb9f', 40);
+      circ(g, 900, 215, 100, '#cdb98a'); circ(g, 900, 215, 92, '#3f8fc9'); circ(g, 885, 200, 62, 'rgba(120,190,235,.55)');
+      ell(g, 930, 240, 14, 9, '#4aa35a', .4); ell(g, 862, 250, 10, 7, '#4aa35a', -.3);
+    },
+  },
+  {
+    name: 'Склад', count: 46, circles: [],
+    rects: [{ x: 400, y: 110, w: 44, h: 220 }, { x: 836, y: 110, w: 44, h: 220 }, { x: 400, y: 470, w: 44, h: 220 }, { x: 836, y: 470, w: 44, h: 220 }],
+    types: [
+      T('Ящик', 22, c => { rect(c, -20, -20, 40, 40, '#b27c3e', 3); c.strokeStyle = '#7d5222'; c.lineWidth = 3; c.strokeRect(-18, -18, 36, 36); line(c, -17, -17, 17, 17, '#7d5222', 3); line(c, 17, -17, -17, 17, '#7d5222', 3); }),
+      T('Бочка', 17, c => { circ(c, 0, 0, 17, '#2f6fb0'); ring(c, 0, 0, 11, '#234f80', 3); circ(c, 6, -6, 3, '#1b3f66'); }),
+      T('Шина', 16, c => { circ(c, 0, 0, 16, '#1c1d20'); ring(c, 0, 0, 12, '#33353a', 2); circ(c, 0, 0, 7, '#6f727a'); }),
+      T('Конус', 12, c => { rect(c, -12, -12, 24, 24, '#c94c1a', 3); circ(c, 0, 0, 9, '#f26a2a'); ring(c, 0, 0, 5.5, '#fff', 2.5); circ(c, 0, 0, 2, '#c94c1a'); }),
+      T('Мешок', 17, c => { ell(c, 0, 1, 17, 13, '#bca67a'); ell(c, -2, -1, 12, 8, '#d0bc92'); circ(c, 13, -8, 4, '#93805a'); }),
+      T('Поддон', 24, c => { rect(c, -24, -18, 48, 36, '#cba76c', 2); for (const x of [-14, 0, 14]) line(c, x, -17, x, 17, '#9c7b45', 4); c.strokeStyle = '#8a6a38'; c.lineWidth = 2; c.strokeRect(-23, -17, 46, 34); }),
+    ],
+    paint(g, rnd) {
+      rect(g, 0, 0, W, H, '#6f727a');
+      for (let x = 80; x < W; x += 80) line(g, x, 0, x, H, 'rgba(0,0,0,.09)', 2);
+      for (let y = 80; y < H; y += 80) line(g, 0, y, W, y, 'rgba(0,0,0,.09)', 2);
+      for (let i = 0; i < 26; i++) ell(g, rnd() * W, rnd() * H, 20 + rnd() * 50, 12 + rnd() * 26, 'rgba(0,0,0,.05)', rnd() * 3);
+      g.setLineDash([26, 16]); g.strokeStyle = '#e0b93a'; g.lineWidth = 5; g.strokeRect(16, 16, W - 32, H - 32); g.setLineDash([]);
+      for (const q of this.rects) {
+        rect(g, q.x + 5, q.y + 6, q.w, q.h, 'rgba(0,0,0,.25)', 4);
+        rect(g, q.x, q.y, q.w, q.h, '#33363e', 4);
+        for (let y = q.y + 14; y < q.y + q.h - 6; y += 22) line(g, q.x + 5, y, q.x + q.w - 5, y, '#565b68', 3);
+        g.strokeStyle = '#1f2127'; g.lineWidth = 2; g.strokeRect(q.x, q.y, q.w, q.h);
+      }
+    },
+  },
+  {
+    name: 'Пляж', count: 44, circles: [], rects: [{ x: 0, y: 0, w: W, h: 112 }],
+    types: [
+      T('Зонт', 28, c => { for (let i = 0; i < 8; i++) sect(c, 28, i * .7854, (i + 1) * .7854 + .02, i % 2 ? '#fff6ea' : '#e2483d'); circ(c, 0, 0, 3, '#7b2a22'); }),
+      T('Мяч', 13, c => { const col = ['#e2483d', '#fff', '#2f8fe0', '#fff', '#f3c62f', '#fff']; for (let i = 0; i < 6; i++) sect(c, 13, i * 1.0472, (i + 1) * 1.0472 + .02, col[i]); circ(c, 0, 0, 3, '#fff'); }),
+      T('Замок', 20, c => { rect(c, -15, -15, 30, 30, '#d3b468', 3); for (const [x, y] of [[-14, -14], [14, -14], [-14, 14], [14, 14]]) { circ(c, x, y, 7, '#bf9d50'); circ(c, x, y, 3.5, '#a98840'); } circ(c, 0, 0, 7, '#bf9d50'); poly(c, [[0, -1], [9, -5], [0, -9]], '#e2483d'); }),
+      T('Пальма', 28, c => { for (let i = 0; i < 6; i++) ell(c, Math.cos(i * 1.047) * 14, Math.sin(i * 1.047) * 14, 15, 6, i % 2 ? '#2e8b4a' : '#267a3f', i * 1.047); circ(c, 0, 0, 5, '#6b4a2a'); }),
+      T('Лежак', 22, c => { rect(c, -12, -24, 24, 48, '#f4f1ea', 4); for (const y of [-8, 4, 16]) rect(c, -12, y, 24, 6, '#3d8fd6'); rect(c, -9, -22, 18, 9, '#ffd66b', 3); }),
+      T('Круг', 15, c => { circ(c, 0, 0, 15, '#fff6ea'); for (let i = 0; i < 4; i++) sect(c, 15, i * 1.5708, i * 1.5708 + .7854, '#e2483d'); circ(c, 0, 0, 7, '#ecd9a0'); }),
+    ],
+    paint(g, rnd) {
+      rect(g, 0, 0, W, H, '#ecd9a0');
+      speckle(g, rnd, 340, ['rgba(255,255,255,.14)', 'rgba(150,110,50,.10)']);
+      const sea = g.createLinearGradient(0, 0, 0, 112);
+      sea.addColorStop(0, '#1f74b5'); sea.addColorStop(1, '#58bfe0');
+      g.fillStyle = sea; g.fillRect(0, 0, W, 112);
+      rect(g, 0, 112, W, 20, 'rgba(140,105,50,.2)');
+      g.strokeStyle = '#fff'; g.lineWidth = 5; g.beginPath();
+      for (let x = 0; x <= W; x += 10) g.lineTo(x, 112 + Math.sin(x / 34) * 5);
+      g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 3;
+      for (const y of [40, 76]) { g.beginPath(); for (let x = 0; x <= W; x += 10) g.lineTo(x, y + Math.sin(x / 46 + y) * 4); g.stroke(); }
+    },
+  },
+  {
+    name: 'Зима', count: 44, circles: [],
+    rects: [{ x: 170, y: 510, w: 170, h: 120 }, { x: 940, y: 170, w: 170, h: 120 }],
+    types: [
+      T('Снеговик', 18, c => { circ(c, 0, 4, 17, '#b5c7d6'); circ(c, 0, 4, 15.5, '#fff'); circ(c, 0, -5, 11, '#b5c7d6'); circ(c, 0, -5, 9.5, '#fff'); circ(c, -4, -7, 1.6, '#222'); circ(c, 4, -7, 1.6, '#222'); poly(c, [[0, -5], [9, -3], [0, -1]], '#ff8a2a'); }),
+      T('Ёлка', 26, c => { poly(c, starPts(8, 26, 14), '#1c5637'); poly(c, starPts(8, 17, 9), '#27754a'); circ(c, 0, 0, 5, '#fff'); }),
+      T('Сугроб', 22, c => { circ(c, -8, 4, 16, '#b9cbda'); circ(c, 10, 6, 14, '#b9cbda'); circ(c, 1, -5, 15, '#b9cbda'); circ(c, -8, 3, 14, '#fff'); circ(c, 10, 5, 12, '#fff'); circ(c, 1, -6, 13, '#fff'); }),
+      T('Подарок', 15, c => { rect(c, -14, -14, 28, 28, '#d23b3b', 3); rect(c, -3, -14, 6, 28, '#ffd24d'); rect(c, -14, -3, 28, 6, '#ffd24d'); circ(c, 0, 0, 5, '#ffb300'); }),
+      T('Санки', 20, c => { line(c, -13, -22, -13, 22, '#4a4f57', 3); line(c, 13, -22, 13, 22, '#4a4f57', 3); rect(c, -10, -19, 20, 38, '#a8662f', 3); for (const y of [-7, 5]) line(c, -9, y, 9, y, '#7c4a20', 2); }),
+      T('Пень', 16, c => { circ(c, 0, 0, 16, '#69462a'); circ(c, 0, 0, 12.5, '#c99c64'); ring(c, 0, 0, 8, '#a57b47', 1.5); ring(c, 0, 0, 4, '#a57b47', 1.5); }),
+    ],
+    paint(g, rnd) {
+      rect(g, 0, 0, W, H, '#e4eef5');
+      speckle(g, rnd, 300, ['rgba(255,255,255,.7)', 'rgba(110,150,190,.13)']);
+      ell(g, 640, 690, 230, 74, '#a9cfe6'); ell(g, 640, 690, 218, 64, '#c3e2f3');
+      line(g, 520, 670, 600, 700, 'rgba(255,255,255,.7)', 3); line(g, 660, 665, 760, 705, 'rgba(255,255,255,.7)', 3);
+      for (const q of this.rects) {
+        rect(g, q.x + 6, q.y + 8, q.w, q.h, 'rgba(40,60,90,.22)', 4);
+        rect(g, q.x, q.y, q.w, q.h / 2, '#8f5a33', 4); rect(g, q.x, q.y + q.h / 2, q.w, q.h / 2, '#6b4124', 4);
+        for (let x = q.x + 18; x < q.x + q.w; x += 18) line(g, x, q.y + 3, x, q.y + q.h - 3, 'rgba(0,0,0,.14)', 2);
+        rect(g, q.x - 3, q.y + q.h / 2 - 7, q.w + 6, 14, '#fff', 7);
+        rect(g, q.x + q.w - 46, q.y + 14, 20, 20, '#4a2d18', 2); rect(g, q.x + q.w - 43, q.y + 11, 14, 8, '#fff', 3);
+      }
+    },
+  },
+];
+const MAP_NAMES = ['По кругу', ...MAPS.map(m => m.name)];
+
+// Расстановка предметов считается у каждого игрока из одного и того же зерна,
+// поэтому тут только целые числа: результат обязан совпасть в любом браузере.
+function buildWorld(map, seed) {
+  const M = MAPS[map], rnd = rng(seed), props = [];
+  let guard = 0;
+  while (props.length < M.count && guard++ < 6000) {
+    const t = props.length % M.types.length, r = M.types[t].r;
+    const x = Math.round(48 + rnd() * (W - 96)), y = Math.round(48 + rnd() * (H - 96));
+    const near = (ox, oy, d) => (x - ox) * (x - ox) + (y - oy) * (y - oy) < d * d;
+    if (SPAWNS.some(s => near(s[0], s[1], 95 + r))) continue;
+    if (M.rects.some(q => x > q.x - r - 30 && x < q.x + q.w + r + 30 && y > q.y - r - 30 && y < q.y + q.h + r + 30)) continue;
+    if (M.circles.some(q => near(q.x, q.y, q.r + r + 30))) continue;
+    if (props.some(p => near(p.x, p.y, p.r + r + 42))) continue;
+    props.push({ t, x, y, r });
+  }
+  return { map, seed, M, props };
+}
+
+/* ---------- транспорт: минимальный MQTT 3.1.1 поверх WebSocket ---------- */
+
+const enc = new TextEncoder(), dec = new TextDecoder();
+const mqStr = s => { const b = enc.encode(s); return [b.length >> 8, b.length & 255, ...b]; };
+function mqPacket(type, body) {
+  const head = [type];
+  let n = body.length;
+  do { const d = n % 128; n = Math.floor(n / 128); head.push(n > 0 ? d | 128 : d); } while (n > 0);
+  const out = new Uint8Array(head.length + body.length);
+  out.set(head); out.set(body, head.length);
+  return out;
+}
+
+// Общий метроном. Обычные таймеры браузер в фоновой вкладке притормаживает вплоть до раза в минуту,
+// а таймер в воркере нет, поэтому связь не рвётся, когда игрок переключился на другое окно.
+const ticks = new Set();
+let metronome = null, lastTick = 0;
+const runTicks = () => {
+  const now = lastTick = performance.now();
+  for (const f of [...ticks]) f(now);
+};
+try {
+  metronome = new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},100)'], { type: 'text/javascript' })));
+  metronome.onmessage = runTicks;
+} catch (e) {}
+setInterval(() => { if (performance.now() - lastTick > 600) runTicks(); }, 500); // если воркер недоступен
+
+// opt: { onUp(conn), onDown(conn), onMsg(topic, obj, conn) }. Сам переподключается, пока не закрыт.
+function mqOpen(url, opt) {
+  const subs = new Set();
+  let ws = null, up = false, closed = false, buf = new Uint8Array(0), pid = 1;
+  let retryAt = 0, openedAt = 0, lastPing = 0, lastRx = 0;
+  const self = { url, get up() { return up; }, pub, sub, close };
+
+  function connect() {
+    openedAt = lastRx = performance.now();
+    let sock;
+    try { sock = ws = new WebSocket(url, 'mqtt'); } catch (e) { ws = null; retryAt = openedAt + 2000; return; }
+    sock.binaryType = 'arraybuffer';
+    buf = new Uint8Array(0);
+    sock.onopen = () => {
+      const id = 'g' + Math.random().toString(36).slice(2, 12);
+      sock.send(mqPacket(0x10, [...mqStr('MQTT'), 4, 2, 0, 60, ...mqStr(id)]));
+    };
+    sock.onmessage = e => { if (sock === ws && !closed) { lastRx = performance.now(); feed(new Uint8Array(e.data)); } };
+    sock.onclose = () => { if (sock === ws) drop(); };
+    sock.onerror = () => {};
+  }
+  // Соединение потеряно или зависло: бросаем его и чуть позже пробуем заново.
+  function drop() {
+    const s = ws, was = up;
+    ws = null; up = false;
+    retryAt = performance.now() + 1500;
+    if (s) { try { s.close(); } catch (e) {} }
+    if (was && !closed && opt.onDown) opt.onDown(self);
+  }
+  function beat(now) {
+    if (closed) return;
+    if (!ws) { if (now >= retryAt) connect(); return; }
+    if (!up) { if (now - openedAt > 10000) drop(); return; }
+    if (now - lastRx > 40000) return drop();
+    if (now - lastPing > 15000 && ws.readyState === 1) { lastPing = now; ws.send(new Uint8Array([0xC0, 0])); }
+  }
+  function feed(chunk) {
+    const merged = new Uint8Array(buf.length + chunk.length);
+    merged.set(buf); merged.set(chunk, buf.length);
+    buf = merged;
+    for (;;) {
+      if (buf.length < 2) return;
+      let len = 0, mult = 1, i = 1, b;
+      do {
+        if (i >= buf.length) return;
+        b = buf[i++]; len += (b & 127) * mult; mult *= 128;
+      } while (b & 128);
+      if (buf.length < i + len) return;
+      const first = buf[0], body = buf.slice(i, i + len);
+      buf = buf.slice(i + len);
+      handle(first, body);
+      if (closed || !ws) return;
+    }
+  }
+  function handle(first, body) {
+    const type = first >> 4;
+    if (type === 2) {               // CONNACK
+      if (body[1] !== 0) return drop();
+      up = true;
+      lastPing = performance.now();
+      for (const t of subs) sendSub(t);
+      if (opt.onUp) opt.onUp(self);
+    } else if (type === 3) {        // PUBLISH
+      const tl = (body[0] << 8) | body[1];
+      const topic = dec.decode(body.subarray(2, 2 + tl));
+      const off = 2 + tl + (((first >> 1) & 3) ? 2 : 0);
+      let obj;
+      try { obj = JSON.parse(dec.decode(body.subarray(off))); } catch (e) { return; }
+      if (obj && typeof obj === 'object') opt.onMsg(topic, obj, self);
+    }
+  }
+  function sendSub(t) {
+    pid = pid % 65535 + 1;
+    ws.send(mqPacket(0x82, [pid >> 8, pid & 255, ...mqStr(t), 0]));
+  }
+  function sub(t) {
+    if (subs.has(t)) return;
+    subs.add(t);
+    if (up) sendSub(t);
+  }
+  function pub(t, obj) {
+    if (!up || !ws || ws.readyState !== 1) return false;
+    ws.send(mqPacket(0x30, [...mqStr(t), ...enc.encode(JSON.stringify(obj))]));
+    return true;
+  }
+  function close() {
+    if (closed) return;
+    closed = true; up = false;
+    ticks.delete(beat);
+    try { if (ws && ws.readyState === 1) ws.send(new Uint8Array([0xE0, 0])); } catch (e) {}
+    try { if (ws) ws.close(); } catch (e) {}
+  }
+  ticks.add(beat);
+  connect();
+  return self;
+}
+
+// Каждое сообщение уходит сразу через все серверы, до которых есть связь, и несёт порядковый номер.
+// Получатель берёт первую пришедшую копию, остальные отбрасывает. Пока жив хоть один сервер, игра идёт.
+const STATEFUL = new Set(['pos', 'sync', 'start', 'lobby', 'over']); // у этих важна только самая свежая версия
+const mkRx = () => ({ max: 0, seen: new Set() });
+// 0 — копия или мусор, 1 — новое, 2 — новое, но опоздавшее (более свежее уже пришло)
+function rxNew(rx, s) {
+  if (!Number.isInteger(s) || s <= 0 || s <= rx.max - 200 || rx.seen.has(s)) return 0;
+  rx.seen.add(s);
+  if (rx.seen.size > 400) for (const v of rx.seen) if (v <= rx.max - 200) rx.seen.delete(v);
+  if (s > rx.max) { rx.max = s; return 1; }
+  return 2;
+}
+// Публичные серверы режут поток: больше примерно 10 сообщений в секунду от одного игрока просто выбрасывается,
+// и вместе с лишним теряется важное. Поэтому держимся заметно ниже, а координаты (soft) при переборе ждут.
+let outSeq = 0;
+const outLog = [];
+function sendAll(topic, msg, soft) {
+  const now = performance.now();
+  while (outLog.length && now - outLog[0] > 1000) outLog.shift();
+  if (soft && outLog.length >= 6) return false;
+  outLog.push(now);
+  msg.s = ++outSeq;
+  for (const b of net) b.pub(topic, msg);
+  return true;
+}
+
+/* ---------- состояние ---------- */
+
+// Хост держит правду: кто охотник, кто найден, сколько осталось времени.
+// Гости шлют ему координаты, превращения и удары, а он раз в секунду рассылает полный снимок раунда.
+let isHost = false, code = '', base = '';
+let net = [];              // открытые соединения с ретрансляторами
+const links = new Map();   // у хоста: id игрока -> { cid, b, seen }
+let cid = '', lastHost = 0, hostRx = mkRx();   // у гостя
+let myId = null;
+let players = [];          // {id, name, slot, score, out, f, x, y, tx, ty, vx, vy}; f — индекс предмета или -1
+let phase = 'menu';        // menu | lobby | play | over
+let ph = 'hide';           // внутри раунда: hide | hunt
+let R = null;              // раунд: { n, map, seed, hunter }
+let world = null;          // { map, seed, M, props }
+let mapSel = -1;           // выбор хоста: -1 — карты по кругу
+let left = 0, phAt = 0, lastLeft = -1, lastBeat = 0, lastPing = 0;
+let hideEnds = 0, endsAt = 0, nextHint = 0, hitGate = 0, roundN = 0, caught = 0, lastOver = null; // у хоста
+let coolUntil = 0, formLock = 0;   // свои задержки: удар и недавнее превращение
+let joinTimer = null, helloTimer = null;
+let nextPid = 1;
+const fx = [], shake = new Map();
+
+const POS_MS = 200;        // как часто рассылаются координаты
+let posDirty = false, lastPosOut = 0;
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const byId = id => players.find(p => p.id === id);
+const cleanName = s => (String(s || '').replace(/\s+/g, ' ').trim().slice(0, 12)) || 'Игрок';
+const validPlayers = a => Array.isArray(a) && a.length > 0 && a.length <= MAXP &&
+  a.every(p => p && typeof p.id === 'string' && [0, 1, 2].includes(p.slot));
+const validRound = r => r && Number.isInteger(r.map) && r.map >= 0 && r.map < MAPS.length &&
+  Number.isFinite(r.seed) && typeof r.hunter === 'string' && Number.isFinite(r.n);
+const isHunter = p => !!R && p.id === R.hunter;
+const radOf = p => (world && p.f >= 0 && world.M.types[p.f]) ? world.M.types[p.f].r : PR;
+const posOf = p => (p.id === myId || p.tx === undefined) ? [p.x, p.y] : [p.tx, p.ty]; // что хост знает наверняка
+// След последних положений игрока: нужен хосту, чтобы честно засчитывать удары по движущейся цели.
+function trail(p, now) {
+  const [x, y] = posOf(p);
+  p.hist = (p.hist || []).filter(h => now - h[2] < 800);
+  p.hist.push([x, y, now]);
+}
+const hidersLeft = () => players.filter(p => !isHunter(p) && !p.out).length;
+
+/* ---------- экраны ---------- */
+
+function show(name) {
+  for (const s of ['menu', 'lobby', 'game']) $(s).hidden = s !== name;
+  if (name === 'game') fit();
+}
+function setStatus(text, bad) {
+  $('status').textContent = text || '';
+  $('status').classList.toggle('bad', !!bad);
+}
+function busy(on) { $('createBtn').disabled = on; $('joinBtn').disabled = on; }
+
+function getName() {
+  const n = cleanName($('nameIn').value);
+  try { localStorage.setItem('ph-name', n); } catch (e) {}
+  return n;
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function dotEl(slot) { const d = el('span', 'dot'); d.style.background = COLORS[slot]; return d; }
+
+function renderLobby() {
+  $('codeOut').textContent = code;
+  $('lobbyHint').textContent = isHost
+    ? 'Отправь код друзьям. Они открывают эту же страницу и вводят его на главном экране.'
+    : 'Ты в комнате. Можно позвать ещё кого-нибудь этим кодом.';
+  $('countLbl').textContent = 'Игроки ' + players.length + '/' + MAXP;
+  const ul = $('slots');
+  ul.textContent = '';
+  for (let s = 0; s < MAXP; s++) {
+    const p = players.find(q => q.slot === s);
+    const li = el('li'), dot = dotEl(s);
+    li.append(dot);
+    if (p) {
+      li.append(el('span', 'nm', p.name));
+      const tags = [];
+      if (p.id === 'p0') tags.push('хост');
+      if (p.id === myId) tags.push('это ты');
+      if (p.score) tags.push(p.score + ' оч.');
+      if (tags.length) li.append(el('span', 'tag', tags.join(' · ')));
+    } else {
+      li.className = 'empty';
+      dot.style.opacity = '.35';
+      li.append(el('span', 'nm', 'ждём игрока…'));
+    }
+    ul.append(li);
+  }
+  $('mapLbl').textContent = isHost ? 'Карта' : 'Карту выбирает хост';
+  const maps = $('maps');
+  maps.textContent = '';
+  MAP_NAMES.forEach((name, i) => {
+    const b = el('button', 'ghost' + (mapSel === i - 1 ? ' on' : ''), name);
+    b.type = 'button';
+    b.disabled = !isHost;
+    b.onclick = () => { mapSel = i - 1; sendLobby(); };
+    maps.append(b);
+  });
+  $('startBtn').hidden = !isHost;
+  $('startBtn').disabled = players.length < 2;
+  $('startBtn').textContent = players.length < 2 ? 'Нужно хотя бы двое' : 'Начать игру';
+  $('waitMsg').hidden = isHost;
+  $('copyLink').hidden = !/^https?:$/.test(location.protocol);
+  $('netInfo').textContent = 'Серверы связи: ' + net.filter(b => b.up).length + ' из ' + BROKERS.length + ' на связи.';
+}
+
+const coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+
+function renderHud() {
+  const hud = $('hud'), me = byId(myId);
+  hud.textContent = '';
+  if (!R) return;
+  for (const p of players.slice().sort((a, b) => a.slot - b.slot)) {
+    const c = el('div', 'chip' + (p.id === myId ? ' me' : '') + (p.out ? ' out' : ''));
+    c.append(dotEl(p.slot), el('span', 'nm', p.name));
+    if (isHunter(p)) c.append(el('span', 'tag', 'охотник'));
+    else if (p.out) c.append(el('span', 'tag', 'найден'));
+    c.append(el('b', '', String(p.score || 0)));
+    hud.append(c);
+  }
+  const t = el('div', left <= 10 && phase === 'play' ? 'low' : '');
+  t.id = 'timer';
+  t.textContent = phase !== 'play' ? 'Итоги'
+    : (ph === 'hide' ? 'Прячемся ' : 'Охота ') + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+  hud.append(t);
+
+  let tip = '';
+  if (phase === 'play' && me) {
+    if (isHunter(me)) {
+      tip = ph === 'hide'
+        ? 'Ты охотник. Подожди, пока остальные спрячутся.'
+        : 'Ты охотник. Подойди к подозрительному предмету и ударь: ' + (coarse ? 'кнопка «Удар»' : 'клик мышью или пробел') + '. Промах отнимает ' + MISS + ' секунд.';
+    } else if (me.out) {
+      tip = 'Тебя нашли. Теперь можно просто смотреть.';
+    } else if (me.f < 0) {
+      tip = 'Подойди к любому предмету и нажми ' + (coarse ? '«Превратиться»' : 'E или пробел') + ', чтобы стать таким же.';
+    } else {
+      tip = 'Ты сейчас «' + world.M.types[me.f].n + '». Замри, когда охотник рядом. Двигающийся предмет выдаёт себя.';
+    }
+  }
+  $('tip').textContent = tip;
+  const act = $('actBtn');
+  act.hidden = !(coarse && phase === 'play' && me && !me.out && !(isHunter(me) && ph === 'hide'));
+  act.textContent = me && isHunter(me) ? 'Удар' : 'Превра­титься';
+}
+
+function showOver(m) {
+  R = m.R;
+  if (!world || world.seed !== R.seed || world.map !== R.map) world = buildWorld(R.map, R.seed);
+  players = m.pl.map(q => {
+    const o = byId(q.id), keep = o && o.x !== undefined;
+    return { ...q, x: keep ? o.x : q.x, y: keep ? o.y : q.y, tx: q.x, ty: q.y, vx: 0, vy: 0 };
+  });
+  phase = 'over';
+  left = 0;
+  const me = byId(myId), hunter = byId(R.hunter);
+  const iWon = me && ((m.win === 'hunter') === isHunter(me)) && !(m.win === 'hiders' && me.out);
+  $('overTitle').textContent = (m.win === 'hunter' ? 'Охотник всех нашёл' : 'Время вышло, предметы победили')
+    + (me ? (iWon ? '. Ты молодец!' : '') : '');
+  const ul = $('res');
+  ul.textContent = '';
+  const found = players.filter(p => !isHunter(p) && p.out).length, total = players.filter(p => !isHunter(p)).length;
+  for (const p of players.slice().sort((a, b) => b.score - a.score)) {
+    const li = el('li'), nm = el('span', 'nm', p.name + (p.id === myId ? ' (ты)' : ''));
+    const what = p === hunter ? 'охотник, нашёл ' + found + ' из ' + total
+      : p.out ? 'прятался, найден'
+      : 'прятался, не найден' + (p.f >= 0 ? ': был «' + world.M.types[p.f].n + '»' : '');
+    nm.append(el('small', '', what));
+    li.append(dotEl(p.slot), nm, el('b', '', String(p.score || 0)));
+    ul.append(li);
+  }
+  $('nextBtn').hidden = $('toLobbyBtn').hidden = !isHost;
+  $('nextBtn').disabled = players.length < 2;
+  $('overWait').hidden = isHost;
+  $('over').hidden = false;
+  show('game');
+  renderHud();
+}
+
+/* ---------- сеть: общее ---------- */
+
+const NO_NET = 'Не получилось связаться с игровыми серверами. Проверь интернет, попробуй включить или выключить VPN и блокировщик рекламы.';
+
+function sayBye() {
+  if (phase === 'menu') return;
+  if (isHost) broadcast({ t: 'bye' });
+  else toHost({ t: 'bye' });
+}
+
+function teardown() {
+  sayBye();
+  ticks.delete(hostBeat); ticks.delete(guestBeat);
+  clearInterval(helloTimer); helloTimer = null;
+  clearTimeout(joinTimer); joinTimer = null;
+  for (const b of net) b.close();
+  net = []; links.clear(); cid = ''; outSeq = 0;
+  $('lag').hidden = true;
+  phase = 'menu'; players = []; myId = null; R = null; world = null; lastOver = null; roundN = 0; mapSel = -1;
+  $('over').hidden = true;
+  busy(false);
+}
+
+function fail(text) {
+  teardown();
+  show('menu');
+  setStatus(text, true);
+}
+
+function leave() {
+  teardown();
+  show('menu');
+  setStatus('');
+}
+
+/* ---------- сеть: хост ---------- */
+
+function createRoom() {
+  teardown();
+  isHost = true;
+  busy(true);
+  setStatus('Создаём комнату…');
+  code = '';
+  for (let i = 0; i < 4; i++) code += ALPHA[Math.floor(Math.random() * ALPHA.length)];
+  base = TOPIC + code;
+  const name = getName();
+  net = BROKERS.map(url => mqOpen(url, {
+    onUp: b => {
+      b.sub(base + '/u/+');
+      if (phase === 'menu') {
+        clearTimeout(joinTimer);
+        myId = 'p0'; nextPid = 1;
+        players = [{ id: 'p0', name, slot: 0, score: 0, out: false, f: -1 }];
+        phase = 'lobby';
+        setStatus('');
+        show('lobby');
+        lastBeat = performance.now();
+        ticks.add(hostBeat);
+      }
+      if (phase === 'lobby') renderLobby();
+    },
+    onDown: () => { if (phase === 'lobby') renderLobby(); },
+    onMsg: onGuestMsg,
+  }));
+  joinTimer = setTimeout(() => { if (phase === 'menu') fail(NO_NET); }, 12000);
+}
+
+function onGuestMsg(topic, m) {
+  const pre = base + '/u/';
+  if (!topic.startsWith(pre)) return;
+  const c = topic.slice(pre.length);
+  if (!/^[a-z0-9]{6,16}$/.test(c)) return;
+  const now = performance.now(), to = base + '/d/' + c;
+  let pid = null;
+  for (const [id, l] of links) if (l.cid === c) pid = id;
+  const welcome = () => sendAll(to, { ...lobbyMsg(), t: 'welcome', id: pid });
+
+  if (!pid) {
+    if (m.t !== 'hello') return;
+    if (phase !== 'lobby') return sendAll(to, { t: 'no', why: 'busy' });
+    if (players.length >= MAXP) return sendAll(to, { t: 'no', why: 'full' });
+    pid = 'p' + nextPid++;
+    const slot = [0, 1, 2].find(s => !players.some(p => p.slot === s));
+    players.push({ id: pid, name: cleanName(m.name), slot, score: 0, out: false, f: -1 });
+    const l = { cid: c, rx: mkRx(), seen: now };
+    rxNew(l.rx, m.s);
+    links.set(pid, l);
+    welcome();
+    sendLobby();
+    return;
+  }
+
+  const l = links.get(pid), p = byId(pid), st = rxNew(l.rx, m.s);
+  if (!st || !p) return;
+  l.seen = now;
+  if (m.t === 'hello') return welcome();
+  if (m.t === 'pos' && st === 1 && Number.isFinite(m.x) && Number.isFinite(m.y)) {
+    aim(p, clamp(m.x, PR, W - PR), clamp(m.y, PR, H - PR));
+    trail(p, now);
+    posDirty = true;
+  } else if (m.t === 'form') {
+    setForm(pid, m.f);
+  } else if (m.t === 'hit') {
+    resolveHit(pid, m);
+  } else if (m.t === 'bye') {
+    dropPlayer(pid);
+  }
+}
+
+function broadcast(msg, soft) {
+  return links.size ? sendAll(base + '/all', msg, soft) : false;
+}
+
+const pubP = p => { const [x, y] = posOf(p); return { id: p.id, name: p.name, slot: p.slot, score: p.score || 0, out: !!p.out, f: p.f, x: Math.round(x || 0), y: Math.round(y || 0) }; };
+const lobbyMsg = () => ({ t: 'lobby', map: mapSel, players: players.map(p => ({ id: p.id, name: p.name, slot: p.slot, score: p.score || 0 })) });
+const snapshot = () => ({ R, ph, left, pl: players.map(pubP) });
+
+function sendLobby() {
+  if (!isHost) return;
+  lastBeat = performance.now();
+  broadcast(lobbyMsg());
+  renderLobby();
+}
+
+function dropPlayer(pid) {
+  links.delete(pid);
+  const wasHunter = R && pid === R.hunter;
+  players = players.filter(p => p.id !== pid);
+  if (phase === 'lobby') return sendLobby();
+  if (phase === 'play') {
+    if (wasHunter || players.length < 2) return endRound('hiders');
+    if (!hidersLeft()) return endRound('hunter');
+    broadcast({ t: 'sync', ...snapshot() });
+    renderHud();
+  } else if (lastOver) {
+    lastOver = { ...lastOver, pl: lastOver.pl.filter(q => q.id !== pid) };
+    broadcast(lastOver);
+    showOver(lastOver);
+  }
+}
+
+function startRound() {
+  if (!isHost || players.length < 2 || (phase !== 'lobby' && phase !== 'over')) return;
+  roundN++;
+  const order = players.slice().sort((a, b) => a.slot - b.slot);
+  const hunter = order[(roundN - 1) % order.length].id;
+  R = { n: roundN, map: mapSel >= 0 ? mapSel : (roundN - 1) % MAPS.length, seed: Math.floor(Math.random() * 2147483647), hunter };
+  let hi = 0;
+  for (const p of players) {
+    const s = p.id === hunter ? SPAWNS[0] : SPAWNS[1 + (hi++ % 2)];
+    p.out = false; p.f = -1;
+    p.x = p.tx = s[0]; p.y = p.ty = s[1];
+  }
+  const now = performance.now();
+  hideEnds = now + HIDE * 1000;
+  endsAt = hideEnds + HUNT * 1000;
+  nextHint = hideEnds + HINT_EVERY * 1000;
+  hitGate = 0; caught = 0; lastOver = null;
+  ph = 'hide'; left = lastLeft = HIDE; lastBeat = now;
+  const msg = { t: 'start', ...snapshot() };
+  broadcast(msg);
+  beginRound(msg);
+}
+
+function endRound(win) {
+  const hunter = byId(R.hunter);
+  if (hunter) hunter.score = (hunter.score || 0) + caught + (win === 'hunter' ? 1 : 0);
+  for (const p of players) if (!isHunter(p) && !p.out) p.score = (p.score || 0) + 2;
+  lastOver = { t: 'over', win, R, pl: players.map(pubP) };
+  lastBeat = performance.now();
+  broadcast(lastOver);
+  showOver(lastOver);
+}
+
+// Раз в четверть секунды: отсев пропавших, часы раунда и повтор текущего состояния.
+// Повтор лечит любые потерянные по дороге сообщения.
+function hostBeat() {
+  const now = performance.now();
+  for (const [pid, l] of links) if (now - l.seen > SILENCE) dropPlayer(pid);
+  // Координаты всех игроков уходят одним сообщением, а не по сообщению на каждое движение.
+  if (phase === 'play' && posDirty && now - lastPosOut >= POS_MS) {
+    const p = players.filter(q => q.x !== undefined).map(q => { const [x, y] = posOf(q); return [q.id, Math.round(x), Math.round(y)]; });
+    if (broadcast({ t: 'pos', p }, true)) { posDirty = false; lastPosOut = now; }
+  }
+  if (phase === 'play') {
+    let force = false;
+    if (ph === 'hide' && now >= hideEnds) { ph = 'hunt'; phAt = now; force = true; }
+    const l = Math.max(0, Math.ceil(((ph === 'hide' ? hideEnds : endsAt) - now) / 1000));
+    if (ph === 'hunt' && now >= nextHint) {
+      nextHint = now + HINT_EVERY * 1000;
+      const pts = players.filter(p => !isHunter(p) && !p.out).map(p => {
+        const [x, y] = posOf(p), a = Math.random() * 6.283, d = 30 + Math.random() * 80;
+        return [Math.round(x + Math.cos(a) * d), Math.round(y + Math.sin(a) * d)];
+      });
+      const msg = { t: 'hint', pts };
+      broadcast(msg);
+      applyHint(msg);
+    }
+    if (force || l !== lastLeft || now - lastBeat > 1000) {
+      lastLeft = left = l; lastBeat = now;
+      broadcast({ t: 'sync', ...snapshot() });
+      renderHud();
+    }
+    if (ph === 'hunt' && l <= 0) endRound('hiders');
+  } else if (now - lastBeat > 2500) {
+    lastBeat = now;
+    broadcast(phase === 'over' && lastOver ? lastOver : lobbyMsg());
+  }
+}
+
+function setForm(pid, f) {
+  const p = byId(pid);
+  if (phase !== 'play' || !p || p.out || isHunter(p)) return;
+  if (!Number.isInteger(f) || f < 0 || f >= world.M.types.length) return;
+  p.f = f;
+  broadcast({ t: 'form', id: pid, f });
+}
+
+function resolveHit(pid, m) {
+  if (phase !== 'play' || ph !== 'hunt' || pid !== R.hunter) return;
+  const now = performance.now(), h = byId(pid);
+  if (!h || now < hitGate || !Number.isFinite(m.x) || !Number.isFinite(m.y)) return;
+  const x = clamp(m.x, 0, W), y = clamp(m.y, 0, H), [hx, hy] = posOf(h);
+  if (Math.hypot(x - hx, y - hy) > REACH + 70) return; // с запасом на задержку сети
+  hitGate = now + 450;
+  let best = null, bd = 1e9;
+  for (const p of players) {
+    if (isHunter(p) || p.out) continue;
+    // Охотник видит цель с опозданием, поэтому засчитываем и то место, где она была мгновение назад.
+    let d = 1e9;
+    for (const [px, py] of [posOf(p), ...(p.hist || []).filter(h => now - h[2] < 700)]) d = Math.min(d, Math.hypot(px - x, py - y));
+    if (d <= radOf(p) + 14 && d < bd) { best = p; bd = d; }
+  }
+  const out = { t: 'hit', x, y, res: 'air' };
+  if (best) {
+    const [px, py] = posOf(best);
+    best.out = true; caught++;
+    Object.assign(out, { res: 'catch', id: best.id, px: Math.round(px), py: Math.round(py) });
+  } else {
+    let bi = -1;
+    world.props.forEach((q, i) => { const d = Math.hypot(q.x - x, q.y - y); if (d <= q.r + 8 && d < bd) { bi = i; bd = d; } });
+    if (bi >= 0) { endsAt -= MISS * 1000; Object.assign(out, { res: 'miss', i: bi }); }
+  }
+  broadcast(out);
+  applyHit(out);
+  if (best && !hidersLeft()) endRound('hunter');
+}
+
+/* ---------- сеть: гость ---------- */
+
+function toHost(msg, soft) {
+  if (isHost || !cid) return false;
+  return sendAll(base + '/u/' + cid, msg, soft);
+}
+
+function joinRoom() {
+  const c = $('codeIn').value.toUpperCase().replace(/[^A-Z]/g, '');
+  if (c.length !== 4) return setStatus('Код комнаты состоит из 4 латинских букв.', true);
+  teardown();
+  const name = getName();
+  isHost = false; code = c; base = TOPIC + code;
+  cid = Math.random().toString(36).slice(2, 12).padEnd(10, '0');
+  hostRx = mkRx();
+  busy(true);
+  setStatus('Подключаемся…');
+  const hello = () => toHost({ t: 'hello', name });
+  net = BROKERS.map(url => mqOpen(url, {
+    onUp: b => {
+      b.sub(base + '/d/' + cid);
+      b.sub(base + '/all');
+      if (!myId) hello();
+      else if (phase === 'lobby') renderLobby();
+    },
+    onDown: () => { if (phase === 'lobby') renderLobby(); },
+    onMsg: onHostMsg,
+  }));
+  helloTimer = setInterval(() => { if (!myId) hello(); }, 1500);
+  joinTimer = setTimeout(() => {
+    if (myId) return;
+    fail(net.some(b => b.up)
+      ? 'Комната с таким кодом не найдена. Проверь код и что хост не закрыл вкладку с игрой.'
+      : NO_NET);
+  }, 10000);
+}
+
+function guestBeat(now) {
+  const quiet = now - lastHost;
+  if (quiet > SILENCE) return fail('Связь с хостом пропала больше чем на ' + SILENCE / 1000 + ' секунд. Зайди в комнату ещё раз.');
+  $('lag').hidden = quiet < LAG_WARN;
+  $('lag').textContent = 'Связь с хостом прерывается, ждём… Серверов на связи: ' + net.filter(b => b.up).length + ' из ' + BROKERS.length + '.';
+  if (now - lastPing > 2000) { lastPing = now; toHost({ t: 'p' }); }
+}
+
+function applyLobby(m) {
+  players = m.players.map(p => ({ ...p, out: false, f: -1 }));
+  mapSel = Number.isInteger(m.map) && m.map >= -1 && m.map < MAPS.length ? m.map : -1;
+  phase = 'lobby';
+  $('over').hidden = true;
+  show('lobby');
+  renderLobby();
+}
+
+function onHostMsg(topic, m) {
+  if (topic !== base + '/all' && topic !== base + '/d/' + cid) return;
+  const now = lastHost = performance.now();
+  const st = rxNew(hostRx, m.s);
+  if (!st || (st === 2 && STATEFUL.has(m.t))) return;
+  if (!myId) {
+    if (m.t === 'welcome' && typeof m.id === 'string' && validPlayers(m.players)) {
+      myId = m.id;
+      clearInterval(helloTimer); helloTimer = null;
+      clearTimeout(joinTimer); joinTimer = null;
+      lastPing = now;
+      ticks.add(guestBeat);
+      setStatus('');
+      applyLobby(m);
+    } else if (m.t === 'no' && topic !== base + '/all') {
+      fail(m.why === 'full' ? 'В комнате уже трое.' : 'Там сейчас идёт игра. Попроси хоста вернуться в лобби и зайди снова.');
+    }
+    return;
+  }
+  const gone = () => fail('Хост потерял с тобой связь. Зайди в комнату ещё раз.');
+  switch (m.t) {
+    case 'lobby':
+      if (!validPlayers(m.players)) break;
+      if (!m.players.some(p => p.id === myId)) return gone();
+      applyLobby(m);
+      break;
+    case 'start':
+    case 'sync': {
+      if (!validPlayers(m.pl) || !validRound(m.R)) break;
+      if (!m.pl.some(p => p.id === myId)) return gone();
+      if (phase !== 'play' || !R || R.n !== m.R.n || R.seed !== m.R.seed) { beginRound(m); break; }
+      if (m.ph !== ph) { ph = m.ph === 'hunt' ? 'hunt' : 'hide'; phAt = now; }
+      left = m.left | 0;
+      players = players.filter(p => m.pl.some(q => q.id === p.id));
+      for (const q of m.pl) {
+        const p = byId(q.id);
+        if (!p) continue;
+        p.score = q.score | 0; p.out = !!q.out;
+        if (q.id !== myId) { p.f = q.f; aim(p, q.x, q.y); }
+        else if (now > formLock) p.f = q.f;
+      }
+      renderHud();
+      break;
+    }
+    case 'pos':
+      if (!Array.isArray(m.p)) break;
+      for (const q of m.p) {
+        const p = Array.isArray(q) && byId(q[0]);
+        if (p && p.id !== myId && Number.isFinite(q[1]) && Number.isFinite(q[2])) aim(p, q[1], q[2]);
+      }
+      break;
+    case 'form': {
+      const p = byId(m.id);
+      if (p && m.id !== myId && Number.isInteger(m.f)) p.f = m.f;
+      break;
+    }
+    case 'hit': if (phase === 'play') applyHit(m); break;
+    case 'hint': if (phase === 'play') applyHint(m); break;
+    case 'over':
+      if (validPlayers(m.pl) && validRound(m.R) && (phase !== 'over' || !R || R.n !== m.R.n || players.length !== m.pl.length)) showOver(m);
+      break;
+    case 'bye': fail('Хост закрыл комнату.'); break;
+  }
+}
+
+/* ---------- раунд (одинаково у всех) ---------- */
+
+function beginRound(m) {
+  R = m.R;
+  world = buildWorld(R.map, R.seed);
+  players = m.pl.map(q => ({ ...q, out: !!q.out, tx: q.x, ty: q.y, vx: 0, vy: 0, fx: 0, fy: 1 }));
+  ph = m.ph === 'hunt' ? 'hunt' : 'hide';
+  left = m.left | 0;
+  phAt = performance.now();
+  fx.length = 0; shake.clear();
+  coolUntil = formLock = 0;
+  sentX = sentY = -1;
+  joy = null;
+  phase = 'play';
+  $('over').hidden = true;
+  show('game');
+  renderHud();
+}
+
+function applyHit(m) {
+  const now = performance.now(), hunter = R && byId(R.hunter);
+  if (hunter && hunter.id !== myId && hunter.x !== undefined) fx.push({ k: 'swing', x1: hunter.x, y1: hunter.y, x: m.x, y: m.y, t: 0, life: .22 });
+  if (m.res === 'catch') {
+    const p = byId(m.id);
+    if (p) {
+      p.out = true;
+      const x = p.id === myId ? p.x : m.px, y = p.id === myId ? p.y : m.py;
+      for (let k = 0; k < 18; k++) {
+        const a = Math.random() * 6.283, v = 70 + Math.random() * 190;
+        fx.push({ k: 'dot', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: .55, col: COLORS[p.slot] });
+      }
+      fx.push({ k: 'text', x, y: y - 24, vy: -34, t: 0, life: 1.6, col: '#fff', text: 'Найден: ' + p.name });
+    }
+  } else if (m.res === 'miss' && world && world.props[m.i]) {
+    const q = world.props[m.i];
+    shake.set(m.i, now + 420);
+    fx.push({ k: 'text', x: q.x, y: q.y - q.r - 10, vy: -34, t: 0, life: 1.1, col: '#ff8d8d', text: '−' + MISS + ' с' });
+  }
+  renderHud();
+}
+
+function applyHint(m) {
+  if (!Array.isArray(m.pts)) return;
+  for (const q of m.pts.slice(0, 2)) {
+    if (Array.isArray(q) && Number.isFinite(q[0]) && Number.isFinite(q[1])) fx.push({ k: 'ping', x: q[0], y: q[1], t: 0, life: 2.2 });
+  }
+}
+
+// Ближайший настоящий предмет, в который можно превратиться.
+function candidate(me) {
+  let best = null, bd = 1e9;
+  for (const q of world.props) {
+    const d = Math.hypot(q.x - me.x, q.y - me.y) - q.r;
+    if (d < 70 && d < bd) { best = q; bd = d; }
+  }
+  return best;
+}
+
+function action(pt) {
+  const me = byId(myId), now = performance.now();
+  if (phase !== 'play' || !me || me.out) return;
+  if (isHunter(me)) {
+    if (ph !== 'hunt' || now < coolUntil) return;
+    let tx, ty;
+    if (pt) {
+      const dx = pt.x - me.x, dy = pt.y - me.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, REACH / d);
+      tx = me.x + dx * k; ty = me.y + dy * k;
+    } else {
+      let bd = REACH;
+      tx = me.x + me.fx * REACH * .7; ty = me.y + me.fy * REACH * .7;
+      const look = (x, y) => { const d = Math.hypot(x - me.x, y - me.y); if (d < bd) { bd = d; tx = x; ty = y; } };
+      for (const q of world.props) look(q.x, q.y);
+      for (const p of players) if (!isHunter(p) && !p.out && p.x !== undefined) look(p.x, p.y);
+    }
+    coolUntil = now + 650;
+    fx.push({ k: 'swing', x1: me.x, y1: me.y, x: tx, y: ty, t: 0, life: .22 });
+    const msg = { t: 'hit', x: Math.round(tx), y: Math.round(ty) };
+    if (isHost) resolveHit(myId, msg); else toHost(msg);
+  } else {
+    const c = candidate(me);
+    if (!c || me.f === c.t) return;
+    me.f = c.t;
+    formLock = now + 1500;
+    if (isHost) broadcast({ t: 'form', id: myId, f: me.f }); else toHost({ t: 'form', f: me.f });
+    renderHud();
+  }
+}
+
+/* ---------- ввод ---------- */
+
+const keys = new Set();
+const KEYMAP = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
+addEventListener('keydown', e => {
+  if (phase !== 'play') return;
+  if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'Enter') {
+    if (!e.repeat) action();
+    e.preventDefault();
+    return;
+  }
+  const k = KEYMAP[e.code];
+  if (!k) return;
+  keys.add(k);
+  e.preventDefault();
+});
+addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) keys.delete(k); });
+addEventListener('blur', () => keys.clear());
+
+const cv = $('cv'), ctx = cv.getContext('2d');
+const ground = document.createElement('canvas'), fog = document.createElement('canvas'), fctx = fog.getContext('2d');
+let joy = null, scale = 1;
+cv.addEventListener('pointerdown', e => {
+  if (phase !== 'play') return;
+  if (e.pointerType === 'mouse') {
+    if (e.button !== 0) return;
+    const rc = cv.getBoundingClientRect(), q = W / rc.width;
+    action({ x: (e.clientX - rc.left) * q, y: (e.clientY - rc.top) * q });
+    return;
+  }
+  joy = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY };
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+});
+cv.addEventListener('pointermove', e => { if (joy && e.pointerId === joy.id) { joy.x = e.clientX; joy.y = e.clientY; } });
+const endJoy = e => { if (joy && e.pointerId === joy.id) joy = null; };
+cv.addEventListener('pointerup', endJoy);
+cv.addEventListener('pointercancel', endJoy);
+$('actBtn').onclick = () => action();
+
+function inputVec() {
+  let x = (keys.has('r') ? 1 : 0) - (keys.has('l') ? 1 : 0);
+  let y = (keys.has('d') ? 1 : 0) - (keys.has('u') ? 1 : 0);
+  if (joy) {
+    const dx = joy.x - joy.ox, dy = joy.y - joy.oy, d = Math.hypot(dx, dy);
+    if (d > 8) { const k = Math.min(1, d / 50) / d; x = dx * k; y = dy * k; }
+  }
+  const len = Math.hypot(x, y);
+  return len > 1 ? [x / len, y / len] : [x, y];
+}
+
+/* ---------- движение ---------- */
+
+function pushCircle(pos, ox, oy, rr) {
+  const dx = pos[0] - ox, dy = pos[1] - oy, d = Math.hypot(dx, dy);
+  if (d >= rr) return;
+  if (d < .01) { pos[0] = ox + rr; return; }
+  pos[0] = ox + dx / d * rr; pos[1] = oy + dy / d * rr;
+}
+function pushRect(pos, q, r) {
+  const nx = clamp(pos[0], q.x, q.x + q.w), ny = clamp(pos[1], q.y, q.y + q.h);
+  const dx = pos[0] - nx, dy = pos[1] - ny, d = Math.hypot(dx, dy);
+  if (d >= r) return;
+  if (d > .01) { pos[0] = nx + dx / d * r; pos[1] = ny + dy / d * r; return; }
+  // центр оказался внутри: выталкиваем к ближайшей стороне
+  const l = pos[0] - q.x, rt = q.x + q.w - pos[0], t = pos[1] - q.y, bt = q.y + q.h - pos[1], m = Math.min(l, rt, t, bt);
+  if (m === l) pos[0] = q.x - r; else if (m === rt) pos[0] = q.x + q.w + r; else if (m === t) pos[1] = q.y - r; else pos[1] = q.y + q.h + r;
+}
+
+let sentAt = 0, sentX = -1, sentY = -1;
+
+// Чужие координаты приходят около пяти раз в секунду, а между ними фигурка едет ровно, с постоянной скоростью.
+function aim(p, x, y) {
+  if (p.x === undefined) { p.x = x; p.y = y; }
+  p.tx = x; p.ty = y;
+  p.gs = Math.max(60, Math.hypot(x - p.x, y - p.y) / 0.23);
+}
+function glide(p, dt) {
+  if (p.tx === undefined) return;
+  if (p.x === undefined) { p.x = p.tx; p.y = p.ty; }
+  const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy);
+  if (d < .5) { p.x = p.tx; p.y = p.ty; p.vx = p.vy = 0; return; }
+  const sp = p.gs || 300, len = Math.min(d, sp * dt);
+  p.x += dx / d * len; p.y += dy / d * len;
+  p.vx = dx / d * sp; p.vy = dy / d * sp;
+}
+
+function step(dt, now) {
+  const me = byId(myId);
+  if (phase === 'play' && me && me.x !== undefined && !me.out && world) {
+    const hunter = isHunter(me), frozen = hunter && ph === 'hide';
+    const [ix, iy] = frozen ? [0, 0] : inputVec();
+    if (ix || iy) { const l = Math.hypot(ix, iy); me.fx = ix / l; me.fy = iy / l; }
+    const sp = hunter ? SP_HUNTER : SP_HIDER, k = Math.min(1, dt * 12);
+    me.vx += (ix * sp - me.vx) * k;
+    me.vy += (iy * sp - me.vy) * k;
+    const pos = [me.x + me.vx * dt, me.y + me.vy * dt], myR = Math.max(PR, radOf(me) * .85);
+    for (const q of world.props) pushCircle(pos, q.x, q.y, q.r * .85 + myR);
+    for (const q of world.M.circles) pushCircle(pos, q.x, q.y, q.r + myR);
+    for (const q of world.M.rects) pushRect(pos, q, myR);
+    // Охотник упирается в спрятавшихся так же, как в обычные предметы, иначе их можно вычислить, пройдя насквозь.
+    if (hunter) for (const p of players) if (!isHunter(p) && !p.out && p.x !== undefined) pushCircle(pos, p.x, p.y, radOf(p) * .85 + myR);
+    me.x = clamp(pos[0], myR, W - myR);
+    me.y = clamp(pos[1], myR, H - myR);
+    const moved = Math.abs(me.x - sentX) > .5 || Math.abs(me.y - sentY) > .5;
+    if ((moved && now - sentAt >= POS_MS) || now - sentAt > 2000) {
+      if (isHost) { posDirty = true; trail(me, now); sentAt = now; sentX = me.x; sentY = me.y; }
+      else if (toHost({ t: 'pos', x: Math.round(me.x), y: Math.round(me.y) }, true)) { sentAt = now; sentX = me.x; sentY = me.y; }
+    }
+  }
+  for (const p of players) if (p.id !== myId) glide(p, dt);
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const f = fx[i];
+    f.t += dt;
+    if (f.vx) f.x += f.vx * dt;
+    if (f.vy) f.y += f.vy * dt;
+    if (f.t >= f.life) fx.splice(i, 1);
+  }
+}
+
+/* ---------- отрисовка ---------- */
+
+function fit() {
+  const st = $('stage');
+  const aw = st.clientWidth - 16, ah = st.clientHeight - 8;
+  if (aw <= 0 || ah <= 0) return;
+  const s = Math.min(aw / W, ah / H);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.style.width = Math.floor(W * s) + 'px';
+  cv.style.height = Math.floor(H * s) + 'px';
+  cv.width = Math.round(W * s * dpr);
+  cv.height = Math.round(H * s * dpr);
+  scale = s * dpr;
+  fog.width = cv.width; fog.height = cv.height;
+  paintGround();
+}
+addEventListener('resize', () => { if (!$('game').hidden) fit(); });
+// Подсказка над полем бывает в одну или две строки, и место под поле меняется вместе с ней.
+if (window.ResizeObserver) {
+  let stageH = 0;
+  new ResizeObserver(() => {
+    const h = $('stage').clientHeight;
+    if (h !== stageH && !$('game').hidden) { stageH = h; fit(); }
+  }).observe($('stage'));
+}
+
+let groundKey = '';
+function paintGround() {
+  if (!world) return;
+  ground.width = cv.width; ground.height = cv.height;
+  const g = ground.getContext('2d');
+  g.setTransform(scale, 0, 0, scale, 0, 0);
+  world.M.paint(g, rng(world.seed ^ 0x5bd1e995));
+  groundKey = world.map + ':' + world.seed + ':' + cv.width;
+}
+
+function drawProp(t, x, y) {
+  const type = world.M.types[t];
+  if (!type) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ell(ctx, 4, 6, type.r, type.r * .82, 'rgba(0,0,0,.2)');
+  type.d(ctx);
+  ctx.restore();
+}
+
+function label(text, x, y, col) {
+  ctx.font = '600 14px "Golos Text", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  const half = ctx.measureText(text).width / 2 + 6, nx = clamp(x, half, W - half), ny = y < 22 ? y + 62 : y;
+  ctx.fillStyle = 'rgba(10,8,6,.8)';
+  ctx.fillText(text, nx + 1, ny + 1);
+  ctx.fillStyle = col || '#fff';
+  ctx.fillText(text, nx, ny);
+}
+
+function drawBlob(p, hunter, alpha) {
+  const col = COLORS[p.slot], r = hunter ? PR + 3 : PR;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ell(ctx, p.x + 3, p.y + 6, r, r * .8, 'rgba(0,0,0,.22)');
+  circ(ctx, p.x, p.y, r, col);
+  const v = Math.hypot(p.vx || 0, p.vy || 0), lx = v > 5 ? p.vx / v : 0, ly = v > 5 ? p.vy / v : 0;
+  for (const sx of [-6, 6]) {
+    circ(ctx, p.x + sx + lx * 2.5, p.y - 2 + ly * 2.5, 4.2, '#fff');
+    circ(ctx, p.x + sx + lx * 4, p.y - 2 + ly * 4, 2, '#17120e');
+  }
+  if (hunter) {
+    rect(ctx, p.x - r - 3, p.y - r - 1, r * 2 + 6, 6, '#2a1d14', 3);
+    rect(ctx, p.x - r + 3, p.y - r - 11, r * 2 - 6, 12, '#2a1d14', 4);
+    rect(ctx, p.x - r + 3, p.y - r - 3, r * 2 - 6, 3, '#ff8a3d');
+  }
+  ctx.restore();
+}
+
+function draw(now) {
+  if (!world || !R) return;
+  if (groundKey !== world.map + ':' + world.seed + ':' + cv.width) paintGround();
+  const t = now / 1000, me = byId(myId);
+  const iHunt = !!me && isHunter(me) && phase === 'play';
+  const seeAll = !iHunt; // прячущиеся, найденные и все на экране итогов видят, кто где
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(ground, 0, 0);
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+
+  const cand = phase === 'play' && me && !me.out && !isHunter(me) ? candidate(me) : null;
+  if (cand && cand.t !== me.f) {
+    ctx.setLineDash([7, 6]);
+    ring(ctx, cand.x, cand.y, cand.r + 9, 'rgba(255,255,255,.85)', 2.5);
+    ctx.setLineDash([]);
+  }
+  if (iHunt && ph === 'hunt') ring(ctx, me.x, me.y, REACH, 'rgba(255,255,255,.16)', 1.5);
+
+  const items = world.props.map((q, i) => ({ y: q.y, q, i }));
+  for (const p of players) {
+    if (p.x === undefined || (p.out && phase === 'play')) continue;
+    items.push({ y: p.y, p });
+  }
+  items.sort((a, b) => a.y - b.y);
+  for (const it of items) {
+    if (it.q) {
+      const sh = shake.get(it.i);
+      drawProp(it.q.t, it.q.x + (sh > now ? Math.sin(now / 14) * 4 : 0), it.q.y);
+      continue;
+    }
+    const p = it.p, mine = p.id === myId;
+    if (isHunter(p)) {
+      drawBlob(p, true, 1);
+      label(p.name + (mine ? '' : ' · охотник'), p.x, p.y - PR - 20);
+    } else if (p.out) {
+      drawBlob(p, false, .45);
+      label(p.name + ' · найден', p.x, p.y - PR - 10, '#ffd0d0');
+    } else if (p.f < 0) {
+      drawBlob(p, false, 1);
+      if (mine || seeAll) label(p.name, p.x, p.y - PR - 10);
+    } else {
+      const r = radOf(p);
+      if (mine) { ctx.setLineDash([4, 5]); ring(ctx, p.x, p.y, r + 6, COLORS[p.slot], 2); ctx.setLineDash([]); }
+      drawProp(p.f, p.x, p.y);
+      if (mine || seeAll) {
+        const by = p.y - r - 12 + Math.sin(t * 5) * 2.5;
+        poly(ctx, [[p.x - 7, by - 9], [p.x + 7, by - 9], [p.x, by]], COLORS[p.slot]);
+        if (!mine) label(p.name, p.x, by - 14);
+      }
+    }
+  }
+
+  for (const f of fx) {
+    const a = 1 - f.t / f.life;
+    ctx.globalAlpha = a;
+    if (f.k === 'dot') circ(ctx, f.x, f.y, 3.2, f.col);
+    else if (f.k === 'swing') { ctx.lineCap = 'round'; line(ctx, f.x1, f.y1, f.x, f.y, '#fff', 5); circ(ctx, f.x, f.y, 10 + (1 - a) * 14, 'rgba(255,255,255,.5)'); }
+    else if (f.k === 'text') { ctx.font = '700 18px "Golos Text", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(10,8,6,.8)'; ctx.fillText(f.text, f.x + 1, f.y + 1); ctx.fillStyle = f.col; ctx.fillText(f.text, f.x, f.y); }
+  }
+  ctx.globalAlpha = 1;
+
+  // Охотник видит только круг вокруг себя.
+  if (iHunt && ph === 'hunt') {
+    fctx.setTransform(1, 0, 0, 1, 0, 0);
+    fctx.globalCompositeOperation = 'source-over';
+    fctx.clearRect(0, 0, fog.width, fog.height);
+    fctx.fillStyle = 'rgba(8,6,5,.985)';
+    fctx.fillRect(0, 0, fog.width, fog.height);
+    fctx.globalCompositeOperation = 'destination-out';
+    fctx.setTransform(scale, 0, 0, scale, 0, 0);
+    const g = fctx.createRadialGradient(me.x, me.y, VIS * .55, me.x, me.y, VIS);
+    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    fctx.fillStyle = g;
+    fctx.beginPath(); fctx.arc(me.x, me.y, VIS, 0, 6.3); fctx.fill();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(fog, 0, 0);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  }
+
+  // Подсказки-«шорохи» видны и сквозь темноту.
+  for (const f of fx) {
+    if (f.k !== 'ping') continue;
+    const a = f.t / f.life;
+    ctx.globalAlpha = 1 - a;
+    ring(ctx, f.x, f.y, 14 + a * 80, '#ffb347', 3);
+    ring(ctx, f.x, f.y, 6 + a * 40, '#ffb347', 2);
+  }
+  ctx.globalAlpha = 1;
+
+  if (joy) {
+    const rc = cv.getBoundingClientRect(), q = W / rc.width;
+    const ox = (joy.ox - rc.left) * q, oy = (joy.oy - rc.top) * q;
+    const dx = (joy.x - joy.ox) * q, dy = (joy.y - joy.oy) * q, d = Math.hypot(dx, dy) || 1, m = Math.min(d, 50 * q);
+    ring(ctx, ox, oy, 50 * q, 'rgba(255,255,255,.4)', 2);
+    circ(ctx, ox + dx / d * m, oy + dy / d * m, 18 * q, 'rgba(255,255,255,.5)');
+  }
+
+  if (phase !== 'play') return;
+  const big = (text, sub) => {
+    ctx.textAlign = 'center';
+    ctx.font = '400 64px "Rubik Mono One", "Arial Black", sans-serif';
+    ctx.fillStyle = 'rgba(10,8,6,.7)'; ctx.fillText(text, W / 2 + 3, H / 2 + 3);
+    ctx.fillStyle = '#ff8a3d'; ctx.fillText(text, W / 2, H / 2);
+    if (sub) { ctx.font = '600 22px "Golos Text", system-ui, sans-serif'; ctx.fillStyle = '#f6efe6'; ctx.fillText(sub, W / 2, H / 2 + 44); }
+  };
+  if (ph === 'hide') {
+    if (iHunt) {
+      rect(ctx, 0, 0, W, H, '#0c0907');
+      big(String(left), 'Не подглядывай: остальные прячутся на карте «' + world.M.name + '»');
+    } else {
+      ctx.textAlign = 'center';
+      ctx.font = '400 30px "Rubik Mono One", "Arial Black", sans-serif';
+      const text = 'Прячься! ' + left;
+      ctx.fillStyle = 'rgba(10,8,6,.7)'; ctx.fillText(text, W / 2 + 2, 52);
+      ctx.fillStyle = '#fff'; ctx.fillText(text, W / 2, 50);
+    }
+  } else if (now - phAt < 1500) {
+    big('Охота!', iHunt ? 'Найди двоих, пока не вышло время' : 'Не шевелись, когда охотник рядом');
+  }
+}
+
+let prev = performance.now(), lastRaf = 0;
+function tick(now, paint) {
+  const dt = Math.min(.05, (now - prev) / 1000);
+  prev = now;
+  if (phase === 'play' || phase === 'over') {
+    step(dt, now);
+    if (paint) draw(now);
+  }
+}
+function frame(now) {
+  lastRaf = now;
+  tick(now, true);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+// Если вкладка не перерисовывается (перекрыта, свёрнута), движение и сеть всё равно идут.
+setInterval(() => {
+  const now = performance.now();
+  if (now - lastRaf > 100) tick(now, false);
+}, 33);
+
+/* ---------- кнопки ---------- */
+
+function copy(text, btn) {
+  const done = () => {
+    const old = btn.textContent;
+    btn.textContent = 'Скопировано';
+    setTimeout(() => { btn.textContent = old; }, 1200);
+  };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.append(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    ta.remove();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+}
+
+$('createBtn').onclick = createRoom;
+$('joinBtn').onclick = joinRoom;
+$('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+$('startBtn').onclick = startRound;
+$('nextBtn').onclick = startRound;
+$('toLobbyBtn').onclick = () => {
+  if (!isHost || phase !== 'over') return;
+  phase = 'lobby'; lastOver = null;
+  $('over').hidden = true;
+  show('lobby');
+  sendLobby();
+};
+$('leaveBtn').onclick = leave;
+$('overLeave').onclick = leave;
+$('copyCode').onclick = e => copy(code, e.currentTarget);
+$('copyLink').onclick = e => copy(location.origin + location.pathname + '#' + code, e.currentTarget);
+addEventListener('pagehide', sayBye);
+
+try { $('nameIn').value = localStorage.getItem('ph-name') || ''; } catch (e) {}
+const hash = location.hash.slice(1).toUpperCase();
+if (/^[A-Z]{4}$/.test(hash)) $('codeIn').value = hash;
+})();
+</script>
+</body>
+</html>
